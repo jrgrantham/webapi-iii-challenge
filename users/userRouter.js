@@ -3,33 +3,36 @@ const express = require("express");
 const Users = require("./userDb");
 const router = express.Router();
 
-router.post("/", (req, res) => {
-  console.log(req.body)
+router.post("/", validateUser, (req, res) => {
   Users.insert(req.body)
     .then(data => {
       res.status(201).json(data);
     })
     .catch(error => {
       res.status(500).json({
-        message: 'Error adding the user: ' + error.message,
+        message: "Error adding the user: " + error.message
       });
-    })
+    });
 });
 
-router.post("/:id/posts", validateUserId, (req, res) => {});
+router.post("/:id/posts", [validateUserId, validatePost], (req, res) => {
+
+});
 
 router.get("/", (req, res) => {
   Users.get()
     .then(data => {
-      res.status(200).json(data)
+      res.status(200).json(data);
     })
     .catch(error => {
-      res.status(500).json({ message: `Error getting Users: ${error.message}` })
-    })
+      res
+        .status(500)
+        .json({ message: `Error getting Users: ${error.message}` });
+    });
 });
 
 router.get("/:id", validateUserId, (req, res) => {
-  res.json(req.data)
+  res.json(req.data);
 });
 
 router.get("/:id/posts", validateUserId, (req, res) => {
@@ -50,8 +53,10 @@ router.delete("/:id", validateUserId, (req, res) => {
       res.status(200).json({ message: `User ${req.params.id} has been nuked` });
     })
     .catch(error => {
-      res.status(500).json({message: `Error removing the user ${req.params.id}: ${error.message}`})
-    })
+      res.status(500).json({
+        message: `Error removing the user ${req.params.id}: ${error.message}`
+      });
+    });
 });
 
 router.put("/:id", validateUserId, validateUser, (req, res) => {
@@ -61,9 +66,9 @@ router.put("/:id", validateUserId, validateUser, (req, res) => {
     })
     .catch(error => {
       res.status(500).json({
-        message: 'Error updating the user: ' + error.message
-      })
-    })
+        message: "Error updating the user: " + error.message
+      });
+    });
 });
 
 //custom middleware
@@ -85,18 +90,25 @@ function validateUserId(req, res, next) {
 }
 
 function validateUser(req, res, next) {
-  console.log(req.body)
   if (Object.keys(req.body).length) {
     if (req.body.name) {
-      next()
+      next();
     } else {
-      res.status(400).json({ message: 'missing required name field' })
+      res.status(400).json({ message: "missing required name field" });
     }
   } else {
-    res.status(400).json({ message: "missing user data" })
+    res.status(400).json({ message: "missing user data" });
   }
 }
 
-function validatePost(req, res, next) {}
+function validatePost(req, res, next) {
+  if (Object.keys(req.body).length && req.body.text) {
+    next();
+  } else if (Object.keys(req.body).length === 0) {
+    res.status(400).json({ message: "missing post data" });
+  } else {
+    res.status(400).json({ message: "missing required text field" });
+  }
+}
 
 module.exports = router;
